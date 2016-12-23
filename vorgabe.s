@@ -1,32 +1,31 @@
 # Aufgabe 1: Bilder laden und speichern
 
-.data  #
-filename: .asciiz  "sky.PGM"	# load_img
-textSpace: .space 1050		#
-array:	   .space 2000
+#
+# load_img
+#
 
-.text
-load_img:	
-    jr $ra				
-    li $v0, 13			# open a file
-    li $a1, 0			# file flag (read)
-    la $a0, filename		#load file name
-    add $a2, $zero, $zero	# file mode (unsused)
-    syscall
-    
-    move $a0, $v0		#load file decriptor
-    li $v0, 14			#read from file
-    la $a1, textSpace		#alloctae spcae for the bytes loaded
-    li $a2, 1050		#number of bytes to be read
-    syscall
-    la $a0, textSpace		#adress of string to be printed
-    li $v0, 1			#print array element
-    syscall
-   
-   
-read_img: 
- 
-    
+load_img:
+    jr $ra
+
+
+
+
+
+
+################################################ fileRead:
+
+# reading from file just opened
+
+read_img:
+
+li   $v0, 14       # Systemaufruf zum lesen aus Datei
+move $a0, $s0      # Dateidescpritor 
+la   $a1, buffer   # Adresse des Puffers von gelesen werden soll
+li   $a2,  11      # hardcoded puffer länge
+syscall            # lese von der Datei
+
+
+
 #########################################
 
 #
@@ -35,7 +34,6 @@ read_img:
 
 store_img:
     jr $ra
-    
 
 #########################################
 
@@ -80,7 +78,7 @@ beispiel_bild_width: .word 64
 beispiel_bild_height: .word 64
 
 
-#array: .word -1, 0, 78, 14, 9, 13, -18, 55, -8, 48, -11, 11
+array: .word -1, 0, 78, 14, 9, 13, -18, 55, -8, 48, -11, 11
 n:     .word 12
 
 
