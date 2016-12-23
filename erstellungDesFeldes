@@ -1,0 +1,9 @@
+	.data 
+arrayOfBild: .word 65.025 	# 255 * 255 = 65.025 Der Speicherplatz fuer das Feld, weil aber jeder Eintraege von diesem Feld 
+				#von Words besteht, sollen wir zusaetzlich fuer jeden Wort 4 Byte, also 260.100, speicher allokieren
+reservingSpaceForArray:	.space 260.100
+
+	.text 
+main:	lw $s0, arrayOfBild	#Bestimmung von der Dimension des Feldes
+	la $s1, reservingSpaceForArray	#Die Adresse des Feldes
+	li $t0, $zero, $zero	# Initialisierung von $t0 - Register
