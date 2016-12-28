@@ -25,13 +25,13 @@ syscall            # lese von der Datei
 		## $a2: width
 		mul 	$t2, $a1, $a2 		# $t2_length_of_array
 		add 	$t0, $zero, $zero	# i=0
-	for:bge 	$t0, $t2, endfor	# if $t0_i >= $a1_length_array goto endfor
-		sll 	$t1, $t0, 2			# $t1 = $t0_i * 4
+	for:	bge 	$t0, $t2, endfor	# if $t0_i >= $a1_length_array goto endfor
+		sll 	$t1, $t0, 2		# $t1 = $t0_i * 4
 		add 	$t1, $a0, $t1		# $t1 = $a0 + 4*i = adress of array[i]
 
 	read_single_char_and_convert: 	
-	# funtion to read and convert data from file. Output: hex at $a3
-	#here we must discuss
+	# this is funtion to read and convert data from file. Output: hex at $a3
+	# here we must discuss
 	#
 		sw 		$a3, $t1			# save array[i] = $a2_hex_code_readed_from_file
 		addi	$t0, $t0, 1			# i++
