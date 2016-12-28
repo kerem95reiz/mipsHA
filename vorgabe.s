@@ -5,11 +5,6 @@
 #
 
 load_img:
-    jr $ra
-
-
-
-
 
 
 ################################################ fileRead:
@@ -21,9 +16,35 @@ read_img:
 li   $v0, 14       # Systemaufruf zum lesen aus Datei
 move $a0, $s0      # Dateidescpritor 
 la   $a1, buffer   # Adresse des Puffers von gelesen werden soll
-li   $a2,  11      # hardcoded puffer l�nge
+li   $a2,  11      # hardcoded puffer länge
 syscall            # lese von der Datei
 
+# => @que
+	## $a0: adress of array[]
+	## $a1: height
+	## $a2: width
+	mul 	$t2, $a1, $a2 		# $t2_length_of_array
+	add 	$t0, $zero, $zero	# i=0
+for:bge 	$t0, $t2, endfor	# if $t0_i >= $a1_length_array goto endfor
+	sll 	$t1, $t0, 2			# $t1 = $t0_i * 4
+	add 	$t1, $a0, $t1		# $t1 = $a0 + 4*i = adress of array[i]
+
+read_single_char_and_convert: 	# funtion to read and convert data from file. Output: hex at $a3
+#here we must discuss
+#
+	sw 		$a3, $t1			# save array[i] = $a2_hex_code_readed_from_file
+	addi	$t0, $t0, 1			# i++
+endfor:
+	## value for next aufgabe:
+	## $a0: adress of array[]
+	## $a1: height
+	## $a2: width
+# <= @que
+
+
+
+
+    jr $ra
 
 
 #########################################
@@ -38,7 +59,7 @@ store_img:
 #########################################
 
 
-# Aufgabe 2: Verringern der Bildauflösung
+# Aufgabe 2: Verringern der BildauflÃ¶sung
 
 #
 # interpolate2
