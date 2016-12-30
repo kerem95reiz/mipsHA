@@ -88,15 +88,6 @@ loop2:
 	exit:
 	
 	jr $ra
-	
-	#Nachdem die Algoritmus fertig ist, nimm das wieder in die Schleife	
-	li $v0, 1		#
-	move $a0, $t3		#
-	syscall
-	
-	li $v0, 4      # print_string syscall
-    	la $a0, NewLine         # load address of the string
- 	syscall
 
 #########################################
 
@@ -105,6 +96,72 @@ loop2:
 #
 
 interpolate:
+
+ 
+	beq $ra, $zero, main
+
+    	la $a1, beispiel_bild	# beispiel_bild auf a1
+    	
+    	la $s0, beispiel_bild_width	#getting the address of width
+    	lw $t3, 0($s0)	# get the value of the width
+    	
+    	la $t7, newArray
+    	
+    	
+    	la $a2, n	# We get here the address of n to the $a2
+    	lw $t8, ($a2)	# We load the value of the n into the $t8
+    	
+	### Die unten stehende Befehle ergeben immer 0 statt 0x40, 
+	### deswegen werde ich davon ausgehen, dass Bilder immer quadratisch 
+	### sein werden
+    	#la $s1, beispiel_bild_height	#getting the address of height
+    	#lw $t4, 0($s1) 	# get the value of the heigt
+	
+
+    	mul $t2, $t3, $t3
+    	#mflo $t2	# get the "low" result of the mult into the %t2
+    	move $t1, $a1			# $t1 will have the beispiel_bild
+
+	addi $t0, $zero, 0 #i = 0
+	addi $t4, $zero, 0 	# $t4 = 0
+	addi $t5, $zero, 0	# $t5 = 0
+	addi $t6, $zero, 0	# $t6 = 0
+	#addi $t7, $zero, 0	# $t7 = 0
+loop3:
+
+	bge $t0, $t2, exit3	#Check, ob die Anzahl von Elementen ueberschritten ist
+loop4:
+	bge $t4, $t8, exit4	# Wird kontrolliert, $t4 => 4
+	addi $t0, $t0, 1	# Laufvariable ($t0) wird um 1 erhoeht
+	lw $t3, ($t1)		#Die Zahl (word) wird geladen
+
+	add $t5, $t5, $t3	# Addition von 4 Zahlen
+		
+	addi $t1, $t1, 4	# $t1 = $t1 + 4	// Fuer das naechste Wort!	
+	addi $t4, $t4, 1	# $t4 = $t4 + 1
+	
+	j loop4	
+	exit4:
+	addi $t4, $zero, 0 	# $t4 = 0
+	
+	div $t6, $t5, $t8
+	sb $t6, ($t7)		# newArray[] = $t6
+	addi, $t7, $t7, 4	# $t7 = 4 * $t7
+
+	li $v0, 1		# Das signalisiert dass etwas ausgegeben werden wird
+	move $a0, $t6		# $a0 = $t6
+	syscall			# Wird durchgefuert
+	
+	li $v0, 4      # print_string syscall
+    	la $a0, NewLine         # load address of the string
+ 	syscall
+
+
+	addi $t5, $zero, 0	# $t5 wird wieder mit 0 gleich gesetzt 
+	j loop3	
+	exit3:
+	
+	
     jr $ra
     
 
@@ -156,7 +213,7 @@ main:
     la $t3, array
     
     
-    jal interpolate2    #Ruft die Funktion "interpolate2" auf
+    jal interpolate    #Ruft die Funktion "interpolate2" auf
     
     
     addi $sp, $sp, -4
