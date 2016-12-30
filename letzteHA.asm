@@ -52,10 +52,14 @@ interpolate2:
 	addi $t4, $zero, 0 	# $t4 = 0
 	addi $t5, $zero, 0	# $t5 = 0
 	addi $t6, $zero, 0	# $t6 = 0
-	#addi $t7, $zero, 0	# $t7 = 0
+	addi $t8, $zero, 0	# $t8 = 0
+	
 loop1:
 
 	bge $t0, $t2, exit	#Check, ob die Anzahl von Elementen ueberschritten ist
+	
+loop9:
+	bge $t8, 64, exit9
 loop2:
 	bge $t4, 4, exit2
 	addi $t0, $t0, 1	# Laufvariable ($t0) wird um 1 erhoeht
@@ -65,6 +69,7 @@ loop2:
 		
 	addi $t1, $t1, 4	# $t1 = $t1 + 4	// Fuer das naechste Wort!	
 	addi $t4, $t4, 1	# $t4 = $t4 + 1
+	addi $t8, $t8, 1	# t8 ++
 	
 	j loop2	
 	exit2:
@@ -78,7 +83,11 @@ loop2:
 	move $a0, $t6		#
 	syscall
 	
-	li $v0, 4      # print_string syscall
+	j loop9
+exit9:
+	addi $t8, $zero, 0	# t8 =0
+	
+	li $v0, 4     		 # print_string syscall
     	la $a0, NewLine         # load address of the string
  	syscall
 
@@ -122,16 +131,19 @@ interpolate:
     	#mflo $t2	# get the "low" result of the mult into the %t2
     	move $t1, $a1			# $t1 will have the beispiel_bild
 
-	addi $t0, $zero, 0 #i = 0
+	addi $t0, $zero, 0 	#i = 0
 	addi $t4, $zero, 0 	# $t4 = 0
 	addi $t5, $zero, 0	# $t5 = 0
 	addi $t6, $zero, 0	# $t6 = 0
-	#addi $t7, $zero, 0	# $t7 = 0
+	addi $t8, $zero, 0	# $t8 = 0
 loop3:
 
 	bge $t0, $t2, exit3	#Check, ob die Anzahl von Elementen ueberschritten ist
 loop4:
-	bge $t4, $t8, exit4	# Wird kontrolliert, $t4 => 4
+	bge $t4, 4, exit4	# Wird kontrolliert, $t4 => 4
+	
+	bge $t0, 64, exit7
+	
 	addi $t0, $t0, 1	# Laufvariable ($t0) wird um 1 erhoeht
 	lw $t3, ($t1)		#Die Zahl (word) wird geladen
 
@@ -141,7 +153,7 @@ loop4:
 	addi $t4, $t4, 1	# $t4 = $t4 + 1
 	
 	j loop4	
-	exit4:
+exit4:
 	addi $t4, $zero, 0 	# $t4 = 0
 	
 	div $t6, $t5, $t8
@@ -151,15 +163,15 @@ loop4:
 	li $v0, 1		# Das signalisiert dass etwas ausgegeben werden wird
 	move $a0, $t6		# $a0 = $t6
 	syscall			# Wird durchgefuert
-	
-	li $v0, 4      # print_string syscall
+exit7:
+	li $v0, 4      		# print_string syscall
     	la $a0, NewLine         # load address of the string
  	syscall
 
 
 	addi $t5, $zero, 0	# $t5 wird wieder mit 0 gleich gesetzt 
 	j loop3	
-	exit3:
+exit3:
 	
 	
     jr $ra
@@ -211,12 +223,14 @@ quantize:
 	addi $t0, $zero, 0 	#i = 0
 	addi $t4, $zero, 0 	# $t4 = 0
 	addi $t5, $zero, 0	# $t5 = 0
-	addi $t6, $zero, 0	# $t6 = 0
+	addi $t6, $zero, 0	# $t6 = 0 
 	
 loop5:
 
 	bge $t0, $t2, exit5	#Check, ob die Anzahl von Elementen ueberschritten ist
-
+loop6:
+	bge $t4, 64, exit6
+	
 	addi $t0, $t0, 1	# Laufvariable ($t0) wird um 1 erhoeht
 	
 
@@ -231,11 +245,14 @@ loop5:
 	li $v0, 1		#
 	move $a0, $t6		#
 	syscall
+	addi $t4, $t4, 1	# i++
 	
-	li $v0, 4      		# print_string syscall
+	j loop6
+ exit6:
+ 	addi $t4, $zero, 0
+ 	li $v0, 4      		# print_string syscall
     	la $a0, NewLine         # load address of the string
  	syscall
- 	
 	j loop5
 	exit5:
 	
@@ -259,7 +276,7 @@ beispiel_bild_width: .word 64
 beispiel_bild_height: .word 64
 array: .word -1, 0, 78, 14, 9, 13, -18, 55, -8, 48, -11, 11
 n:     .word 12
-x:     .word 2
+x:     .word 4
 NewLine: .asciiz "\n" 
 newArray: .space 4096
 quantiArray: .space 4096
@@ -283,7 +300,7 @@ main:
     la $t3, array
     
     
-    #jal interpolate    #Ruft die Funktion "interpolate2" auf
+    jal interpolate2    #Ruft die Funktion "interpolate2" auf
     jal quantize	#ruft quantize auf
     
     
