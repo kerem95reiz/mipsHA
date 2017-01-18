@@ -1,0 +1,20 @@
+# Oeffnen die Datei, die noch nicht existieren
+li   $v0, 13       # Oeffnen wir die Datei
+la   $a0, filename_2     # Output wird bestimmt
+li   $a1, 1        # Oeffnen zum Schreiben (flags sind 0: lesen, 1: schreiben)
+li   $a2, 0        # mode ist ignoriert
+syscall            # Oeffnet die Datei
+move $s0, $v0      # Speichern den Deskriptor
+
+# Offnet die Datei zum Schreiben
+li $v0, 15	# Oeffnen die Datei Zum schreiben
+move $a0, $s0 	# Syscall 15 erfordert den File Deskriptor in  $a0
+la $a3, buffer	# Die Adresse von buffer zu $a3 gespeichert
+move $a1, $a3	# Nehmen wir die Adresse von diesem Feld
+li $a2, 65551	# So viel Bytes werden in die Datei geschrieben
+syscall
+
+# Wird der Stream gescshlossen
+li $v0, 16	# Die Datei wird geschlossen
+move $a0, $s0	# Mit dem FileDeskriptor wird Stream geschlossen
+syscall		# Schliesst Stream
