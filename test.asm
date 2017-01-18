@@ -5,6 +5,7 @@ buffer1: .asciiz "\n"
 val : .space 1280
 newline: .asciiz "\n"
 space: .asciiz "" 
+buffer3: .space 4
 
 .text
 
@@ -29,14 +30,61 @@ la   $a1, buffer   # address of buffer from which to read
 li   $a2,  1010    # hardcoded buffer length
 syscall            # read from file
 
-li  $v0, 4          # 
-la  $a0, buffer     # buffer contains the values
-syscall             # print int
+#li  $v0, 4          # 
+#la  $a0, buffer     # buffer contains the values
+#syscall             # print int
 
 
-# header lesen
+# header lesen P
 addi $t0, $zero, 0
 lb $t1, buffer($t0)
+li $v0, 1
+move $a0, $t1
+syscall
+
+# read 5
+addi $t0, $t0, 1
+lb $t1, buffer($t0)
+addi $t1, $t1, -48
+li $v0, 1
+move $a0, $t1
+syscall
+
+# read 5
+addi $t0, $t0, 2
+lb $t1, buffer($t0)
+addi $t1, $t1, -48
+li $v0, 1
+move $a0, $t1
+syscall
+
+# read 5
+addi $t0, $t0, 1
+lb $t1, buffer($t0)
+addi $t1, $t1, -48
+li $v0, 1
+move $a0, $t1
+syscall
+
+# read 5
+addi $t0, $t0, 1
+lb $t1, buffer($t0)
+addi $t1, $t1, -48
+li $v0, 1
+move $a0, $t1
+syscall
+
+# read 5
+addi $t0, $t0, 2
+lb $t1, buffer($t0)
+addi $t1, $t1, -48
+li $v0, 1
+move $a0, $t1
+syscall
+# read 5
+addi $t0, $t0, 1
+lb $t1, buffer($t0)
+addi $t1, $t1, -48
 li $v0, 1
 move $a0, $t1
 syscall
@@ -53,27 +101,28 @@ li $v0, 4
 la $a0, newline
 syscall
 
-#addi $t0, $t0, 1  		# i++
-#loop1:
-
+addi $t0, $t0, 1  		# i++
+##loop1:
+#addi $t0, $zero, 0		#i++
 #lb $t1, buffer($t0)		# buffer wird auf $t1 gespeichert
-#addi $t2, $zero, 32		# $t2 wird 32 zugewiesen (32 bedeutet in ascii 'space'
+#addi $t2, $zero, 32		# $t2 wird 32 zugewiesen (32 bedeutet in ascii 'space')
 #beq $t2, $t1, addi1		# er vergleicht jezt die aus dem Buffer gelesene Zahl mit 32(also einem space), wenn er ein Space findet, dann i++
+#sb $t1, buffer3($t3)
 				
-
+				# die erste Zahl aus dem Buffer 1. * 100, 2. * 10, 3.*1
 
 #addi $t1, $t1, 1		# i ++
 
 #li $v0, 1			# print int
-#move $a0, $t1		
+#move $a0, $t3	
 #syscall			
 
 
 #j loop1
 
-addi1: 
+#addi1: 
 
-addi $t1, $t1, 1		# i++
+#addi $t1, $t1, 1		# i++
 
 
 
