@@ -106,10 +106,10 @@ move $s0, $v0      # save the file descriptor at $s0.
 			lw	$t2, 1($t1)   			# $t2 holds 2nd byte of buffer_breite
 			mult	$t0, $t1			# $t0 * $t1 = Hi and Lo registers
 			mflo	$t4					# copy Lo to $t4
-			addi $t3, $t3, $t4			# $t3 holds result (for now 250). Don't TOUCH!
+			add $t3, $t3, $t4			# $t3 holds result (for now 250). Don't TOUCH!
 			##
 			lw	$t2, 2($t1)   			# $t2 holds 3th byte of buffer_breite
-			addi $t3, $t3, $t2			# $t3 should be now 256
+			add $t3, $t3, $t2			# $t3 should be now 256
 			## Now we save it into ibreite
 			sw		$t3, 0($s3)		    #done
 			
@@ -121,7 +121,7 @@ move $s0, $v0      # save the file descriptor at $s0.
 			mflo	$t3					# $t3 holds result (for now 60). Don't TOUCH!.    copy Lo to $t3
 			##
 			lw	$t2, 1($t1)   			# $t2 holds 2th byte of buffer_breite
-			addi $t3, $t3, $t2			# $t3 should be now 64
+			add $t3, $t3, $t2			# $t3 should be now 64
 			## Now we save it into ibreite
 			sw		$t3, 0($s3)		    #done
 
@@ -142,10 +142,10 @@ convert_hoehe:
 			lw	$t2, 1($t1)   			# $t2 holds 2nd byte of buffer_hoehe
 			mult	$t0, $t1			# $t0 * $t1 = Hi and Lo registers
 			mflo	$t4					# copy Lo to $t4
-			addi $t3, $t3, $t4			# $t3 holds result (for now 250). Don't TOUCH!
+			add $t3, $t3, $t4			# $t3 holds result (for now 250). Don't TOUCH!
 			##
 			lw	$t2, 2($t1)   			# $t2 holds 3th byte of buffer_hoehe
-			addi $t3, $t3, $t2			# $t3 should be now 256
+			add $t3, $t3, $t2			# $t3 should be now 256
 			## Now we save it into $ibreite
 			sw		$t3, 0($s3)		    #done
 			
@@ -157,7 +157,7 @@ convert_hoehe:
 			mflo	$t3					# $t3 holds result (for now 60). Don't TOUCH!.    copy Lo to $t3
 			##
 			lw	$t2, 1($t1)   			# $t2 holds 2th byte of buffer_hoehe
-			addi $t3, $t3, $t2			# $t3 should be now 64
+			add $t3, $t3, $t2			# $t3 should be now 64
 			## Now we save it into ihoehe
 			sw		$t3, 0($s3)		    #done
 		
