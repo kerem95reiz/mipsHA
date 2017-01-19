@@ -40,15 +40,18 @@ move $s0, $v0      # save the file descriptor at $s0.
 		read_breite:
 			syscall            # read from file. 
 			#beqz $v0, file_fucked       # Check EOF. Jump to error and end the programm. Write it late.
-        		#bltz $v0, filed_fucked      # …Read-failure check. Jump to error and end the programm. Write it late.
+        	#bltz $v0, filed_fucked      # …Read-failure check. Jump to error and end the programm. Write it late.
 			li $t1, 57
 			li $t2, 48
 			la $t9, buffer
-			lw $t0, 0($t9)
+			lw $t0, 0($t9)					# $t0 holds byte just read
+
 			bgt $t0, $t1, end_read_breite		# if > 57 then end_read_breite
 			blt $t0, $t2, end_read_breite		# if < 48
-			la $s3, buffer_breite		# load adress of buffer_breite to $s3. (buffer_breite ist 4-byte length)
-			lb $s3, ($t0)					# load byte just read
+
+			la $s3, buffer_breite		# $s3 holds adress of buffer_breite from now and will be pushed forward
+			sw $t0, 0($s3)				# we saved $t0 to the adress $s3 holds
+			addi $s3, $s3, 1			# ... then move $s3 one byte forward (for the next byte)
 			addi $s1, $s1, 1			# breite counter counts up...
 			addi $s0, $s0, 1			# file descriptor move to next bytes
 			## Prepare for next syscall:
@@ -69,15 +72,18 @@ move $s0, $v0      # save the file descriptor at $s0.
 		read_hoehe:
 			syscall			#read
 			#beqz $v0, file_fucked       # Check EOF. Jump to error and end the programm. Write it late.
-        		#bltz $v0, filed_fucked      # …Read-failure check. Jump to error and end the programm. Write it late.
+        	#bltz $v0, filed_fucked      # …Read-failure check. Jump to error and end the programm. Write it late.
 			li $t1, 57
 			li $t2, 48
 			la $t9, buffer
 			lw $t0, 0($t9)
+
 			bgt $t0, $t1, end_read_hoehe		# if > 57 then end_read_hoehe
 			blt $t0, $t2, end_read_hoehe		# if < 48
+			
 			la $s4, buffer_hoehe		# load adress of buffer_breite to $s3. (buffer_breite ist 4-byte length)
-			lb $s4, 0($t0)					# load byte just read
+			sw $t0, 0($s4)					# load byte just read
+			addi $s4, $s4, 1			# ... then move $s4 one byte forward (for the next byte)
 			addi $s2, $s2, 1			# hoehe counter counts up...
 			addi $s0, $s0, 1			# file descriptor move to next bytes
 			## Prepare for next syscall:
