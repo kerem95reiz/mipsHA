@@ -37,20 +37,19 @@ move $s0, $v0      # save the file descriptor at $s0.
 	li $s1, 0				# we save the length of breite in buffer_breite at $s1 
 	li $s2, 0				# we save the length of hoehe in buffer_hoehe at $s2 
 #### 3==> this is new, 2:33 19.01
-
-		la $s3, buffer_breite		# load adress of buffer_breite to $s3. (buffer_breite ist 4-byte length)
 		read_breite:
 			syscall            # read from file. 
-			beqz $v0, file_fucked       # Check EOF. Jump to error and end the programm. Write it late.
-        	bltz $v0, filed_fucked      # …Read-failure check. Jump to error and end the programm. Write it late.
+			#beqz $v0, file_fucked       # Check EOF. Jump to error and end the programm. Write it late.
+        		#bltz $v0, filed_fucked      # …Read-failure check. Jump to error and end the programm. Write it late.
 			li $t1, 57
 			li $t2, 48
-			lw $t0, 0(buffer)
+			la $t9, buffer
+			lw $t0, 0($t9)
 			bgt $t0, $t1, end_read_breite		# if > 57 then end_read_breite
 			blt $t0, $t2, end_read_breite		# if < 48
-			sw $s3, 0($t0)					# save that byte to the adress $s3
+			la $s3, buffer_breite		# load adress of buffer_breite to $s3. (buffer_breite ist 4-byte length)
+			lb $s3, ($t0)					# load byte just read
 			addi $s1, $s1, 1			# breite counter counts up...
-			addi $s3, $s3, 1			#... so do $s3 to.
 			addi $s0, $s0, 1			# file descriptor move to next bytes
 			## Prepare for next syscall:
 				li $v0, 14		#read file
@@ -66,21 +65,20 @@ move $s0, $v0      # save the file descriptor at $s0.
 			la   $a1, buffer    # save read byte to 0(buffer)
 			li   $a2, 1   	    # just read 1 byte.
 
-			
 
-		la $s3, buffer_hoehe		# load adress of buffer_hoehe to $s3. (buffer_breite ist 4-byte length)
 		read_hoehe:
 			syscall			#read
-			beqz $v0, file_fucked       # Check EOF. Jump to error and end the programm. Write it late.
-        	bltz $v0, filed_fucked      # …Read-failure check. Jump to error and end the programm. Write it late.
+			#beqz $v0, file_fucked       # Check EOF. Jump to error and end the programm. Write it late.
+        		#bltz $v0, filed_fucked      # …Read-failure check. Jump to error and end the programm. Write it late.
 			li $t1, 57
 			li $t2, 48
-			lw $t0, 0(buffer)
+			la $t9, buffer
+			lw $t0, 0($t9)
 			bgt $t0, $t1, end_read_hoehe		# if > 57 then end_read_hoehe
 			blt $t0, $t2, end_read_hoehe		# if < 48
-			sw $s3, 0($t0)					# save that byte to the adress $s3
+			la $s4, buffer_hoehe		# load adress of buffer_breite to $s3. (buffer_breite ist 4-byte length)
+			lb $s4, 0($t0)					# load byte just read
 			addi $s2, $s2, 1			# hoehe counter counts up...
-			addi $s3, $s3, 1			#... so do $s3 to.
 			addi $s0, $s0, 1			# file descriptor move to next bytes
 			## Prepare for next syscall:
 				li $v0, 14		#read file
@@ -91,19 +89,78 @@ move $s0, $v0      # save the file descriptor at $s0.
 		end_read_hoehe:
 		## so now we end read_hoehe, buffer_hoehe holds a string with len=$s2. Now move our ass and continue to convert data:
 #### <==3 this is new, 2:33 19.01
-
+####
 #### Convert data to int:
-		convert_hoehe:
-			li $t0, 2		# $t0 = 2 so we can compare it with length of buffer_
-			la		$t1, buffer_breite		#  get address buffer_breite save to $t1.
-			lw		$t9, 0($t1)   			# load first byte of buffer_breite
-			beq		$t0, $s1, convert_hoehe_2	# if length == 2 then jump to convert for 2 char. Else:
+		convert_breite:
+			la $s3, ibreite				# $s3 holds adress of ibreite
+			li $t0, 2					# $t0 = 2 so we can compare it with length of buffer_
+			la	$t1, buffer_breite		# $t1 holds address buffer_breite 
+			lw	$t2, 0($t1)   			# $t2 holds first byte of buffer_breite
+			beq	$t0, $s1, convert_breite_2	# if length == 2 then jump to convert for 2 char. Else:
+			## THIS IS FOR LENGTH==3
+			li $t9, 100
+			mult $t2, $t9			    # $t0 * $t1 = Hi and Lo registers
+			mflo	$t3					# $t3 holds result (for now 200). Don't TOUCH!.    copy Lo to $t3
+			##			
+			li $t9, 10
+			lw	$t2, 1($t1)   			# $t2 holds 2nd byte of buffer_breite
+			mult	$t0, $t1			# $t0 * $t1 = Hi and Lo registers
+			mflo	$t4					# copy Lo to $t4
+			addi $t3, $t3, $t4			# $t3 holds result (for now 250). Don't TOUCH!
+			##
+			lw	$t2, 2($t1)   			# $t2 holds 3th byte of buffer_breite
+			addi $t3, $t3, $t2			# $t3 should be now 256
+			## Now we save it into ibreite
+			sw		$t3, 0($s3)		    #done
 			
-			
-									
 
+		convert_breite_2:
+			## THIS IS FOR LENGTH==2
+			li $t9, 10
+			mult $t2, $t9			    # $t0 * $t1 = Hi and Lo registers
+			mflo	$t3					# $t3 holds result (for now 60). Don't TOUCH!.    copy Lo to $t3
+			##
+			lw	$t2, 1($t1)   			# $t2 holds 2th byte of buffer_breite
+			addi $t3, $t3, $t2			# $t3 should be now 64
+			## Now we save it into ibreite
+			sw		$t3, 0($s3)		    #done
+
+
+
+convert_hoehe:
+			la $s3, ihoehe				# $s3 holds adress of ihoehe
+			li $t0, 2					# $t0 = 2 so we can compare it with length of buffer_
+			la	$t1, buffer_hoehe		# $t1 holds address buffer_hoehe
+			lw	$t2, 0($t1)   			# $t2 holds first byte of buffer_hoehe
+			beq	$t0, $s2, convert_hoehe_2	# if length == 2 then jump to convert for 2 char. Else:
+			## THIS IS FOR LENGTH==3
+			li $t9, 100
+			mult $t2, $t9			    # $t0 * $t1 = Hi and Lo registers
+			mflo	$t3					# $t3 holds result (for now 200). Don't TOUCH!.    copy Lo to $t3
+			##			
+			li $t9, 10
+			lw	$t2, 1($t1)   			# $t2 holds 2nd byte of buffer_hoehe
+			mult	$t0, $t1			# $t0 * $t1 = Hi and Lo registers
+			mflo	$t4					# copy Lo to $t4
+			addi $t3, $t3, $t4			# $t3 holds result (for now 250). Don't TOUCH!
+			##
+			lw	$t2, 2($t1)   			# $t2 holds 3th byte of buffer_hoehe
+			addi $t3, $t3, $t2			# $t3 should be now 256
+			## Now we save it into $ibreite
+			sw		$t3, 0($s3)		    #done
+			
 
 		convert_hoehe_2:
+			## THIS IS FOR LENGTH==2
+			li $t9, 10
+			mult $t2, $t9			    # $t0 * $t1 = Hi and Lo registers
+			mflo	$t3					# $t3 holds result (for now 60). Don't TOUCH!.    copy Lo to $t3
+			##
+			lw	$t2, 1($t1)   			# $t2 holds 2th byte of buffer_hoehe
+			addi $t3, $t3, $t2			# $t3 should be now 64
+			## Now we save it into ihoehe
+			sw		$t3, 0($s3)		    #done
+		
 
 
 
@@ -117,31 +174,12 @@ move $s0, $v0      # save the file descriptor at $s0.
 
 
 
-rd_breite:
-addi $t0, $zero, 3		#i++
-lb $t1, buffer($t0)		# buffer wird auf $t1 gespeichert
-addi $t2, $zero, 48		# $t2 wird 32 zugewiesen (32 bedeutet in ascii 'space')
-addi $t3, $zero, 57 
-bgt $t1, $t3, end_rd_breite
-blt $t1, $t2, end_rd_breite		# er vergleicht jezt die aus dem Buffer gelesene Zahl mit 32(also einem space), wenn er ein Space findet, dann i++
-addi $t4, $zero, 0
-sb $t1, buffer_breite($t4)
-addi $t4, $t4, 1                #
+# UP THERE !!!!
+###########
+###########
+###########
 
-				# die erste Zahl aus dem Buffer 1. * 100, 2. * 10, 3.*1
 
-addi $t1, $t1, 1		# 
-##########
-li $v0, 1			# print int
-move $a0, $t3	
-syscall			
-##########
-
-j rd_breite
-
-end_rd_breite:
-
-addi $t1, $t1, 1		# i++
 
 ####### convert char to int, breite
 addi $t5, $zero, 0      # $t5 hold integer value of rd_breite. for now 0
@@ -157,7 +195,7 @@ mfhi $t1
 lb $t7, 1($t9)            # t8 = 5. elem von buffer_breite
 addi $s1, $zero, 10
 mult $t7, $s1       # t7 = 50
-mfhi $s1
+mflo $s1
 addi $v0, $v0, 1
 #--        # v0 ++
 lb $t8, 2($t9) # 6
