@@ -1,7 +1,7 @@
 .data  
 fin: .asciiz "/Users/mr.pear/Desktop/sky.pgm"      # filename for input
-buffer: .space 12800
-buffer_read: .space 12800
+buffer: .space 10000
+buffer_read: .space 10000
 buffer1: .asciiz "\n"
 val: .space 1280
 newline: .asciiz "\n"
@@ -16,151 +16,210 @@ ihoehe: .byte 4
 
 .text
 
-################################################ fileRead:
+load_image:
+			addi $sp, $sp, -4
+			sw $ra, 0($sp)
+			##### NOTE:
+			# We assume that the date format is correctly saved and will not test with error file.
+			# Open file for reading
+			li   $v0, 13       # system call for open file
+			la   $a0, fin      # input file name
+			li   $a1, 0        # flag for reading
+			li   $a2, 0        # mode is ignored
+			syscall            # open a file 
+			move $s0, $v0      # save the file descriptor at $s0.
 
-# Open file for reading
-li   $v0, 13       # system call for open file
-la   $a0, fin      # input file name
-li   $a1, 0        # flag for reading
-li   $a2, 0        # mode is ignored
-syscall            # open a file 
-move $s0, $v0      # save the file descriptor at $s0.
+			# reading from file just opened
+			li   $v0, 14       # system call for reading from file
+			move $a0, $s0      # file descriptor 
+			la   $a1, buffer   # ...save read byte to 0(buffer)
+			li   $a2,  1   	   # just read 1 byte at header.
+			##
+			li $s1, 0				# we save the length of breite in buffer_breite at $s1 
+			li $s2, 0				# we save the length of hoehe in buffer_hoehe at $s2 
+				
+			# We did all prepare. Now beginn to work:
+				read_format:
+					syscall			# read 'P', hope so.
 
-# reading from file just opened
-	li   $v0, 14       # system call for reading from file
-	move $a0, $s0      # file descriptor 
-	la   $a1, buffer   # ...save read byte to 0(buffer)
-	li   $a2,  1   	   # just read 1 byte at header.
-	##
-	li $s1, 0				# we save the length of breite in buffer_breite at $s1 
-	li $s2, 0				# we save the length of hoehe in buffer_hoehe at $s2 
-#### 3==> this is new, 2:33 19.01
-		read_format:
-			syscall			# read 'P', hope so.
+					addi $a1, $a1, 1
+					li $v0, 14		# read 5, save in buffer at [1]
+					syscall
+				end_read_format:
+					addi $a1, $a1, 1
+					li $v0, 14		#prepare for next syscall 14
 
-			addi $a1, $a1, 1
-			li $v0, 14		# read 5, save in buffer at [1]
-			syscall
-		end_read_format:
-			addi $a1, $a1, 1
-			li $v0, 14		#prepare for next syscall 14
+				read_breite:
+					syscall            # read from file. 
+					li $t1, 0x39
+					li $t2, 0x30
+					lb $t0, 0($a1)					# $t0 holds byte just read
+					# we always check if we reached not-a-number:
+					bgt $t0, $t1, end_read_breite		# if > 57 then end_read_breite
+					blt $t0, $t2, end_read_breite		# if < 48
+					# else...
+					move $s3, $a1			# $s3 holds exactly end-position of breite in buffer.
+					addi $a1, $a1, 1		# $a1 moves forward ($a1 is pointer to buffer[])
+					addi $s1, $s1, 1		# breite-length counts up...
+					## Prepare for next syscall:
+						li $v0, 14			#read file
+					j read_breite	# while schleife, read until we reach anything that not belong to '0'->'9'
+				end_read_breite:
 
-		read_breite:
-			syscall            # read from file. 
-			li $t1, 57
-			li $t2, 48
-			lb $t0, 0($a1)					# $t0 holds byte just read
-			# we always check if we reached not-a-number:
-			bgt $t0, $t1, end_read_breite		# if > 57 then end_read_breite
-			blt $t0, $t2, end_read_breite		# if < 48
-			# else...
-			move $s3, $a1			# $s3 holds exactly end-position of breite in buffer.
-			addi $a1, $a1, 1		# $a1 moves forward ($a1 is pointer to buffer[])
-			addi $s1, $s1, 1		# breite-length counts up...
-			## Prepare for next syscall:
-				li $v0, 14			#read file
-			j read_breite	# while schleife, read until we reach anything that not belong to '0'->'9'
-		end_read_breite:
+				# $s1: length of breite (number of digit)
+				# $s3: end-potition of breite in buffer[]
+				# $s0: file discriptor. Don't care, don't touch!
+				## so now we end read_breite. Now move our ass and prepare for reading hoehe:
+					li $v0, 14			# read file
+					addi $a1, $a1, 1	# move 1 byte forward, so we can touch the block of (hoehe)
 
-		# $s1: length of breite (number of digit)
-		# $s3: end-potition of breite in buffer[]
-		# $s0: file discriptor. Don't care, don't touch!
-		## so now we end read_breite. Now move our ass and prepare for reading hoehe:
-			li $v0, 14			# read file
-			addi $a1, $a1, 2	# move 2 byte forward, so we can touch the block of (hoehe)
+				read_hoehe:
+					syscall			#read
+					li $t1, 0x39
+					li $t2, 0x30
+					lb $t0, 0($a1)			
+					# we always check if we reached not-a-number:
+					bgt $t0, $t1, end_read_hoehe		# if > 57 then end_read_hoehe
+					blt $t0, $t2, end_read_hoehe		# if < 48
+					# else...
+					move $s4, $a1				# $s3 holds exactly end-position of breite in buffer.
+					addi $a1, $a1, 1			# $a1 moves forward ($a1 is pointer to buffer[])
+					addi $s2, $s2, 1			# hoehe-length counts up...
+					## Prepare for next syscall:
+						li $v0, 14		#read file
+					j read_hoehe		# while schleife, read until we reach anything that not belong to '0'->'9'
+				end_read_hoehe:
+					# $s1: length of breite (number of digit)
+					# $s3: end-potition of breite in buffer[]
+					# $s0: file discriptor. Don't care, don't touch!
+					# $s2: length of hoehe
+					# $s4: end-potition of hoehe in buffer[]
+				## so now we end hoehe.
+		#### <==3 this is very new.
+		####
+		#### Convert data to int:
+				convert_breite_new_version:
+					lb $t0, 0($s3)		# $t0 holds last digit of breite
+					addi $t0, $t0, -48
+					## if length of breite <2...
+					li $t9, 2
+					blt	$s1, $t9, end_convert_breite_new_version	
+					## ...else:
+					lb $t1, -1($s3)		# $t1 holds 1-before last digit of breite
+					addi $t1, $t1, -48
+					li $t9, 10
+					mul $t1, $t1, $t9
+					add $t0, $t0, $t9	
+					## if length of breite <3...
+					li $t9, 3
+					blt	$s1, $t9, end_convert_breite_new_version	
+					## ...else:
+					lb $t1, -2($s3)		# $t1 holds 2-before last digit of breite
+					addi $t1, $t1, -48
+					li $t9, 100
+					mul $t1, $t1, $t9
+					add $t0, $t0, $t9
+					## if length of breite <4...
+					li $t9, 4
+					blt	$s1, $t9, end_convert_breite_new_version	
+					## ...else:
+					lb $t1, -3($s3)		# $t1 holds 3-before last digit of breite
+					addi $t1, $t1, -48
+					li $t9, 1000
+					mul $t1, $t1, $t9
+					add $t0, $t0, $t9
+				end_convert_breite_new_version:
+					move $s5, $t0
+					# $s5: breite, in Integer.
+		##############################################
+				convert_hoehe_new_version:
+					lb $t0, 0($s4)		# $t0 holds last digit of breite
+					addi $t0, $t0, -48
+					## if length of hoehe <2...
+					li $t9, 2
+					blt	$s2, $t9, end_convert_hoehe_new_version	
+					## ...else:
+					lb $t1, -1($s4)		# $t1 holds 1-before last digit of breite
+					addi $t1, $t1, -48
+					li $t9, 10
+					mul $t1, $t1, $t9
+					add $t0, $t0, $t9	
+					## if length of hoehe <3...
+					li $t9, 3
+					blt	$s2, $t9, end_convert_hoehe_new_version		
+					## ...else:
+					lb $t1, -2($s4)		# $t1 holds 2-before last digit of breite
+					addi $t1, $t1, -48
+					li $t9, 100
+					mul $t1, $t1, $t9
+					add $t0, $t0, $t9
+					## if length of hoehe <4...
+					li $t9, 4
+					blt	$s2, $t9, end_convert_hoehe_new_version		
+					## ...else:
+					lb $t1, -3($s4)		# $t1 holds 3-before last digit of breite
+					addi $t1, $t1, -48
+					li $t9, 1000
+					mul $t1, $t1, $t9
+					add $t0, $t0, $t9
+				end_convert_hoehe_new_version:
+					move $s6, $t0
+					# $s6: hoehe, in Integer.
 
-		read_hoehe:
-			syscall			#read
-			li $t1, 57
-			li $t2, 48
-			lb $t0, 0($a1)
-			# we always check if we reached not-a-number:
-			bgt $t0, $t1, end_read_hoehe		# if > 57 then end_read_hoehe
-			blt $t0, $t2, end_read_hoehe		# if < 48
-			# else...
-			move $s4, $a1				# $s3 holds exactly end-position of breite in buffer.
-			addi $a1, $a1, 1			# $a1 moves forward ($a1 is pointer to buffer[])
-			addi $s2, $s2, 1			# hoehe-length counts up...
-			## Prepare for next syscall:
-				li $v0, 14		#read file
-			j read_hoehe		# while schleife, read until we reach anything that not belong to '0'->'9'
-		end_read_hoehe:
-			# $s1: length of breite (number of digit)
-			# $s3: end-potition of breite in buffer[]
-			# $s0: file discriptor. Don't care, don't touch!
-			# $s2: length of hoehe
-			# $s4: end-potition of hoehe in buffer[]
-		## so now we end hoehe.
-#### <==3 this is very new.
-####
-#### Convert data to int:
-		convert_breite_new_version:
-			lb $t0, 0($s3)		# $t0 holds last digit of breite
-			addi $t0, $t0, -48
-			## if length of breite <2...
-			li $t9, 2
-			blt	$s1, $t9, end_convert_breite_new_version	
-			## ...else:
-			lb $t1, -1($s3)		# $t1 holds 1-before last digit of breite
-			addi $t1, $t1, -48
-			li $t9, 10
-			mul $t1, $t1, $t9
-			add $t0, $t0, $t9	
-			## if length of breite <3...
-			li $t9, 3
-			blt	$s1, $t9, end_convert_breite_new_version	
-			## ...else:
-			lb $t1, -2($s3)		# $t1 holds 2-before last digit of breite
-			addi $t1, $t1, -48
-			li $t9, 100
-			mul $t1, $t1, $t9
-			add $t0, $t0, $t9
-			## if length of breite <4...
-			li $t9, 4
-			blt	$s1, $t9, end_convert_breite_new_version	
-			## ...else:
-			lb $t1, -3($s3)		# $t1 holds 3-before last digit of breite
-			addi $t1, $t1, -48
-			li $t9, 1000
-			mul $t1, $t1, $t9
-			add $t0, $t0, $t9
-		end_convert_breite_new_version:
-			move $s5, $t0
-			# $s5: breite, in Integer.
-##############################################
-		convert_hoehe_new_version:
-			lb $t0, 0($s4)		# $t0 holds last digit of breite
-			addi $t0, $t0, -48
-			## if length of hoehe <2...
-			li $t9, 2
-			blt	$s2, $t9, end_convert_hoehe_new_version	
-			## ...else:
-			lb $t1, -1($s4)		# $t1 holds 1-before last digit of breite
-			addi $t1, $t1, -48
-			li $t9, 10
-			mul $t1, $t1, $t9
-			add $t0, $t0, $t9	
-			## if length of hoehe <3...
-			li $t9, 3
-			blt	$s2, $t9, end_convert_hoehe_new_version		
-			## ...else:
-			lb $t1, -2($s4)		# $t1 holds 2-before last digit of breite
-			addi $t1, $t1, -48
-			li $t9, 100
-			mul $t1, $t1, $t9
-			add $t0, $t0, $t9
-			## if length of hoehe <4...
-			li $t9, 4
-			blt	$s2, $t9, end_convert_hoehe_new_version		
-			## ...else:
-			lb $t1, -3($s4)		# $t1 holds 3-before last digit of breite
-			addi $t1, $t1, -48
-			li $t9, 1000
-			mul $t1, $t1, $t9
-			add $t0, $t0, $t9
-		end_convert_hoehe_new_version:
-			move $s6, $t0
-			# $s6: hoehe, in Integer.
+
+				#### 'Five' more steps and we reach the data.
+				#### Let'go! Go through the Farbetiefe!
+					li $t1, 0x20            # " "
+					li $t2, 0x0A            # "\n"
+				read_farbe_tiefe:
+					li $v0, 14
+					addi $a1, $a1, 1	# 
+					syscall				# 
+					lb $t0, ($a1)
+					bgt $t0, $t1, end_read_farbe_tiefe
+					blt $t0, $t2, end_read_farbe_tiefe
+
+					j read_farbe_tiefe
+				end_read_farbe_tiefe:	
+				# We have just read all farbe_tiefe and now $a1 are pointing to the '\'
+				addi $a1, $a1, 1	# now $a1 points to first bytes of data.
+				li  $t9, 32			# 'space' in ascii
+				mul $t8, $s5, $s6	# breite * hoehe = length of data. We don't save the space betwenn .
+				add $t8, $t8, $a1	# end_adress = length + now_adress
+				move $t0, $a1		# $t0 holds the beginn point of data in buffer.
+				#
+				read_data:
+					beg $a1, $t8, end_read_data		# we check everytime if we reach the end of file.
+					li $v0, 14
+					syscall							# read 1 byte. At first syscall we read the first byte of data. 
+					lb $t1, ($a1)
+					beq	$t1, $t9, read_data			# if we reach 'space' then continue. $a1 stay like before and new byte will replace the space.
+					# ...else:
+					addi $a1, $a1, 1       			# Address +1
+
+					j read_data
+				end_read_data:
+
+			### Close file:
+				li $v0, 16             
+				move $a1, $s0           
+				syscall
+
+			### Return:
+				move $v0, $s5	# breite
+				move $v1, $s6	# hoehe
+				move $s9, $t8	# pointer to data	
+
+			### Back to the future:
+				lw $ra, 0($sp)
+				addi $sp, $sp, 4
+				jr $ra;	
+
+###### END load_image!!!
+# We have saved all in buffer, we have breite and hoehe in v0, v1. We have $s9 which contains the adress of data.
+store_img:
+
+
 
 # UP THERE !!!!
 ###########
