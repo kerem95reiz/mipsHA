@@ -92,3 +92,84 @@ move $s0, $v0      # save the file descriptor at $s0.
 			# $s4: end-potition of hoehe in buffer[]
 		## so now we end hoehe.
 #### <==3 this is very new.
+####
+#### Convert data to int:
+		convert_breite_new_version:
+			lb $t0, 0($s3)		# $t0 holds last digit of breite
+			addi $t0, $t0, -48
+			## if length of breite <2...
+			li $t9, 2
+			blt	$s1, $t9, end_convert_breite_new_version	
+			## ...else:
+			lb $t1, -1($s3)		# $t1 holds 1-before last digit of breite
+			addi $t1, $t1, -48
+			li $t9, 10
+			mul $t1, $t1, $t9
+			add $t0, $t0, $t9	
+			## if length of breite <3...
+			li $t9, 3
+			blt	$s1, $t9, end_convert_breite_new_version	
+			## ...else:
+			lb $t1, -2($s3)		# $t1 holds 2-before last digit of breite
+			addi $t1, $t1, -48
+			li $t9, 100
+			mul $t1, $t1, $t9
+			add $t0, $t0, $t9
+			## if length of breite <4...
+			li $t9, 4
+			blt	$s1, $t9, end_convert_breite_new_version	
+			## ...else:
+			lb $t1, -3($s3)		# $t1 holds 3-before last digit of breite
+			addi $t1, $t1, -48
+			li $t9, 1000
+			mul $t1, $t1, $t9
+			add $t0, $t0, $t9
+		end_convert_breite_new_version:
+			move $s5, $t0
+			# $s5: breite, in Integer.
+##############################################
+		convert_hoehe_new_version:
+			lb $t0, 0($s4)		# $t0 holds last digit of breite
+			addi $t0, $t0, -48
+			## if length of hoehe <2...
+			li $t9, 2
+			blt	$s2, $t9, end_convert_hoehe_new_version	
+			## ...else:
+			lb $t1, -1($s4)		# $t1 holds 1-before last digit of breite
+			addi $t1, $t1, -48
+			li $t9, 10
+			mul $t1, $t1, $t9
+			add $t0, $t0, $t9	
+			## if length of hoehe <3...
+			li $t9, 3
+			blt	$s2, $t9, end_convert_hoehe_new_version		
+			## ...else:
+			lb $t1, -2($s4)		# $t1 holds 2-before last digit of breite
+			addi $t1, $t1, -48
+			li $t9, 100
+			mul $t1, $t1, $t9
+			add $t0, $t0, $t9
+			## if length of hoehe <4...
+			li $t9, 4
+			blt	$s2, $t9, end_convert_hoehe_new_version		
+			## ...else:
+			lb $t1, -3($s4)		# $t1 holds 3-before last digit of breite
+			addi $t1, $t1, -48
+			li $t9, 1000
+			mul $t1, $t1, $t9
+			add $t0, $t0, $t9
+		end_convert_hoehe_new_version:
+			move $s6, $t0
+			# $s6: hoehe, in Integer.
+
+# UP THERE !!!!
+###########
+###########
+###########
+
+
+# Close the file 
+
+li   $v0, 16       # system call for close file
+move $a0, $s6      # file descriptor to close
+syscall            # close file
