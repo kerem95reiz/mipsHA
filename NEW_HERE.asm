@@ -169,8 +169,8 @@ load_image:
 
 				#### 'Five' more steps and we reach the data.
 				#### Let'go! Go through the Farbetiefe!
-					li $t1, 0x20            # " "
 					li $t2, 0x0A            # "\n"
+					li $t1, 0x20            # " "
 				read_farbe_tiefe:
 					li $v0, 14
 					addi $a1, $a1, 1	# 
