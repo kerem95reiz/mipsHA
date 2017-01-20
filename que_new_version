@@ -1,0 +1,96 @@
+.data  
+fin: .asciiz "/Users/mr.pear/Desktop/sky.pgm"      # filename for input
+buffer: .space 12800
+buffer_read: .space 12800
+buffer1: .asciiz "\n"
+val: .space 1280
+newline: .asciiz "\n"
+space: .asciiz " " 
+buffer_breite: .space 4
+buffer_hoehe: .space 4
+
+
+ibreite: .byte 4
+ihoehe: .byte 4
+
+
+.text
+
+################################################ fileRead:
+
+# Open file for reading
+li   $v0, 13       # system call for open file
+la   $a0, fin      # input file name
+li   $a1, 0        # flag for reading
+li   $a2, 0        # mode is ignored
+syscall            # open a file 
+move $s0, $v0      # save the file descriptor at $s0.
+
+# reading from file just opened
+	li   $v0, 14       # system call for reading from file
+	move $a0, $s0      # file descriptor 
+	la   $a1, buffer   # ...save read byte to 0(buffer)
+	li   $a2,  1   	   # just read 1 byte at header.
+	##
+	li $s1, 0				# we save the length of breite in buffer_breite at $s1 
+	li $s2, 0				# we save the length of hoehe in buffer_hoehe at $s2 
+#### 3==> this is new, 2:33 19.01
+		read_format:
+			syscall			# read 'P', hope so.
+
+			addi $a1, $a1, 1
+			li $v0, 14		# read 5, save in buffer at [1]
+			syscall
+		end_read_format:
+			addi $a1, $a1, 1
+			li $v0, 14		#prepare for next syscall 14
+
+		read_breite:
+			syscall            # read from file. 
+			li $t1, 57
+			li $t2, 48
+			lb $t0, 0($a1)					# $t0 holds byte just read
+			# we always check if we reached not-a-number:
+			bgt $t0, $t1, end_read_breite		# if > 57 then end_read_breite
+			blt $t0, $t2, end_read_breite		# if < 48
+			# else...
+			move $s3, $a1			# $s3 holds exactly end-position of breite in buffer.
+			addi $a1, $a1, 1		# $a1 moves forward ($a1 is pointer to buffer[])
+			addi $s1, $s1, 1		# breite-length counts up...
+			## Prepare for next syscall:
+				li $v0, 14			#read file
+			j read_breite	# while schleife, read until we reach anything that not belong to '0'->'9'
+		end_read_breite:
+
+		# $s1: length of breite (number of digit)
+		# $s3: end-potition of breite in buffer[]
+		# $s0: file discriptor. Don't care, don't touch!
+		## so now we end read_breite. Now move our ass and prepare for reading hoehe:
+			li $v0, 14			# read file
+			addi $s0, $s0, 2	# move 2 byte forward, so we can touch the block of (hoehe)
+			move $a0, $s0		# load adress of file descriptor
+			la   $a1, buffer    # save read byte to 0(buffer)
+
+		read_hoehe:
+			syscall			#read
+			li $t1, 57
+			li $t2, 48
+			lb $t0, 0($a1)
+			# we always check if we reached not-a-number:
+			bgt $t0, $t1, end_read_hoehe		# if > 57 then end_read_hoehe
+			blt $t0, $t2, end_read_hoehe		# if < 48
+			# else...
+			move $s4, $a1				# $s3 holds exactly end-position of breite in buffer.
+			addi $a1, $a1, 1			# $a1 moves forward ($a1 is pointer to buffer[])
+			addi $s2, $s2, 1			# hoehe-length counts up...
+			## Prepare for next syscall:
+				li $v0, 14		#read file
+			j read_hoehe		# while schleife, read until we reach anything that not belong to '0'->'9'
+		end_read_hoehe:
+			# $s1: length of breite (number of digit)
+			# $s3: end-potition of breite in buffer[]
+			# $s0: file discriptor. Don't care, don't touch!
+			# $s2: length of hoehe
+			# $s4: end-potition of hoehe in buffer[]
+		## so now we end hoehe.
+#### <==3 this is very new.
