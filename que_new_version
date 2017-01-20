@@ -67,9 +67,7 @@ move $s0, $v0      # save the file descriptor at $s0.
 		# $s0: file discriptor. Don't care, don't touch!
 		## so now we end read_breite. Now move our ass and prepare for reading hoehe:
 			li $v0, 14			# read file
-			addi $s0, $s0, 2	# move 2 byte forward, so we can touch the block of (hoehe)
-			move $a0, $s0		# load adress of file descriptor
-			la   $a1, buffer    # save read byte to 0(buffer)
+			addi $a0, $a0, 2	# move 2 byte forward, so we can touch the block of (hoehe)
 
 		read_hoehe:
 			syscall			#read
