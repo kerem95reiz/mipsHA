@@ -226,7 +226,148 @@ load_image:
 #
 
 store_img:
-    jr $ra
+			# Stack:
+			addi $sp, $sp, -4
+			sw $ra, 0($sp)
+
+			# s1 holds breite, input
+			# s2 holds hoehe, input
+			# s3 holds pixel adress
+			la $s0, buffer_write    # $s0 holds pixel adress buffer_write
+
+			###### 'P5\n' #####
+			    li $t0, 0x50            # 'P'
+			    sb $t0, 0($s0)          # 
+			    addi $s0, $s0, 1        # $s0 moves 1 byte forward
+			    li $t0, 0x35            # '5'
+			    sb $t0, 0($s0)          # 
+			    addi $s0, $s0, 1        #  
+			    li $t0, 0x0A            # '\n'
+			    sb $t0, 0($s0)          # 
+			    addi $s0, $s0, 1        # $s0 moves 1 byte forward
+
+			###### breite #####
+			li $t1, 48            
+			li $t2, 57    
+			move $t3, $s1           # $t3 holds breite's adress
+			lb $t0, 0($t3)          # $t0 holds breite's value
+			write_breite:
+			    sb $t0, 0($s0)      # Write $t0 into Buffer
+			    addi $s0, $s0, 1    # $s0 go forward (destination)
+			    addi $t3, $t3, 1    # $t3 go forward (source)
+			    lb $t0, 0($t3)      # Load t3 to t0
+			    # We check if reach any thing not-a-number (expect 'space')
+			    bgt $t0, $t2, write_breite_end   
+			    blt $t0, $t1, write_breite_end  
+			    # ... else, go on:
+
+			    j write_breite
+			write_breite_end:
+
+			###### 'space' #####
+			li $t0, 0x20            # " "
+			sb $t0, 0($s0)          # 
+			addi $s0, $s0, 1        # 
+
+			###### hoehe #####
+			li $t1, 48            
+			li $t2, 57  
+			move $t3, $s2           # $t3 holds hoehe's adress
+			lb $t0, 0($t3)          # $t0 holds breite's value
+			write_height:
+			    sb $t0, 0($s0)      # Write $t0 into Buffer
+			    addi $s0, $s0, 1    # Write Buffer Address +1
+			    addi $t3, $t3, 1    # Height Pointer Address +1
+			    lb $t0, 0($t3)      # Load t3 to t0
+			    # We check if reach any thing not-a-number (expect 'space')
+			    bgt $t0, $t2, write_height_end  
+			    blt $t0, $t1, write_height_end  
+			    # ... else, go on:
+
+			    j write_height
+			write_height_end:
+
+			###### '\n' ######
+			    li $t0, 0x0A            # "\n"
+			    sb $t0, 0($s0)          # 
+			    addi $s0, $s0, 1        # 
+
+
+
+			###### 255\n #####
+			    li $t0, 0x32            # '2'
+			    sb $t0, 0($s0)          # 
+			    addi $s0, $s0, 1        # $s0 moves 1 byte forward
+			    li $t0, 0x35            # '5'
+			    sb $t0, 0($s0)          # 
+			    addi $s0, $s0, 1        # 
+			    li $t0, 0x35            # '5'
+			    sb $t0, 0($s0)          # 
+			    addi $s0, $s0, 1        #  
+			    li $t0, 0x0A            # '\n'
+			    sb $t0, 0($s0)          # 
+			    addi $s0, $s0, 1        # $s0 moves 1 byte forward
+
+
+
+
+
+
+			# We are DONE with header!!!!
+			#####################################################
+			# Now, pixel data.
+			# We assume that source data is correct and contains no error.
+
+			move $t3, $s3           # t3 holds adress of pixel-block
+			lb $t0, 0($t3)          # $t0 holds first pixel
+			write_pixel:
+			    sb $t0, 0($s0)      # Write $t0 into Buffer
+			    addi $t3, $t3, 1    # pointer moves forward (destination)
+			    addi $s0, $s0, 1    # pointer moves forward (source)
+			    lb $t0, 0($t3)      # Load t3 to t0
+			    beq $t0, $zero, write_pixel_end    # t0 is 0x00, +1 counter
+
+			    j write_pixel
+			write_pixel_end:
+
+			####
+			#####
+			######                              ####)
+			###########################################)
+			###########################################) .       FERTIG MIT BUFFER.
+			###########################################)            NOW PRINT!!!
+			######                              ####)
+			#####
+			####
+
+
+			li $v0, 13          # 
+			la $a0, fin_out     # a1 holds name file output
+			li $a1, 1           # 0/1/9 = read/write/append
+			li $a3, 0           # s3 = Mode  (ignored)
+			syscall             #  
+			move $t9, $v0       # $t9 holds descriptor
+			li $t7, 20          # header < 20 char
+			mul $t8, $s1, $s2   # breite*hoehe
+			add $t8, $t8, $t7   # now we know how many should we write from buffer_write
+
+			# DO IT:
+			li $v0, 15          # 15 : Write file
+			move $a1, $t9       # s1 = File descriptor
+			la $a2, buffer_write    # s2 = Writing Buffer
+			move $s3, $t8        # s.O
+			syscall
+
+
+			# So, nothing more, right?
+			# Let's clean up.
+			li $v0, 16              
+			move $a2, $t9           
+			syscall
+
+			lw $ra, 0($sp)
+			addi $sp, $sp, 4
+			jr $ra
 
 #########################################
 
