@@ -6,14 +6,18 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
-
+#include <time.h>
 #include "main.h"
 #include "utils.h"
 #include "bruteforce.h"
 
+/* please consult readme for Aufgabenteil e)
+*/
 
 int main(int argc, char* argv[])
 {
+    time_t start = time(0);
+  
     // Process Commandline arguments
     if(argc != 5 || !strcmp("-h", argv[1]) || !strcmp("--help", argv[1]))
     {
@@ -24,6 +28,7 @@ int main(int argc, char* argv[])
         printf("\t\t<max>          \t = highest number of cleartext length\n\n");
         return 0;
     }
+
     process_count = atoi(argv[2]);
     min_password_length = atoi(argv[3]);
     max_password_length = atoi(argv[4]);
@@ -35,53 +40,79 @@ int main(int argc, char* argv[])
 	*/
 
     /* HIER KÖNNTE IHRE IMPLEMENTIERUNG STEHEN */
-
-	if(process_count>25)
-	{
-		process_count=25;
-	}
-	printf("the number of process=%d\n",process_count);	
-	pid_t* processIds=malloc(sizeof(pid_t)*process_count);
-	char** work=malloc(sizeof(char*)*(process_count+1));
-	split_work(work,2);
-	char* cleartext;
-	for(int i=0;i<process_count;i++)
-	{
-		pid_t child_pid=fork();
-		if (child_pid == 0) 
-		{ 
-			/* this code is only executed in the child process */ 
-			processIds[i]=getpid();
-			printf("Started process: %s--%s:!\n",work[i],work[i+1]);
-			char* result= brute(argv[1],work[i],work[i+1]);
-			if(result!=NULL)
-			{
-				cleartext=result;
-				printf("cleartext: %s\n",cleartext);
-				printf("%s--%s: GEFUNDEN!\n",work[i],work[i+1]);				
-				for(int j=0;j<process_count;j++)
-				{
-					if(getpid()!=processIds[j])
-						kill(processIds[j],SIGKILL);//kill another process
-				}
-				
-			}else
-			{
-				printf("%s--%s: nicht gefunden!\n",work[i],work[i+1]);
-			}
-			
-			exit(0);//end process
-		}
-		else if (child_pid > 0) 
-		{
-			/* this code is only executed in the parent process */
-			//pid_t  wpid;
-			int status = 0;
-			wait(&status);//wait for the childprocess to finish
-			//wpid = wait(&status);//wait for the childprocess to finish
-		}
-
-	}
-	free(processIds);	
-	free_work_data(work,argv[1]);
+    if(process_count < 1 || process_count > 25) {
+      printf("process count should be something between 1 and 25\n");
+      return 0;
+    }
+    
+    int stepsize = 26 / process_count;
+    
+    char** delimiters = (char**) malloc(sizeof(char*) * (1 + process_count));
+    split_work(delimiters, stepsize);
+    
+    pid_t pid = 0;
+    pid_t children[process_count];
+    int i = 0;
+    for(i=0; i<process_count; i++) {
+      pid = fork();
+      if(pid == 0) {
+			// "i am a child" -> break loop
+			break; 
+      }
+      else {
+			// save id of child in array. we need this later to kill them all
+			children[i] = pid;
+      }
+    }
+    
+    if(pid > 0) {
+			  int wstatus = 0;
+			  pid_t default_pid = -1;
+			  int exitstatus = 1;
+			  
+			  // main process waits for any status changes in children
+			  // only when status 0 is returned (process actually found something), kill all others
+			  // main process itself does not bruteforce
+			  
+			  while(exitstatus != 0) {      
+			waitpid(default_pid, &wstatus, 0);
+			exitstatus = WEXITSTATUS(wstatus);
+			  }
+			  for(int i=0; i< process_count; i++) {
+			// printf("Töte Prozess: %d\n", children[i]);
+			kill(children[i], SIGKILL);
+			  }
+			  
+			  for(int i=0; i < process_count+1; i++)
+			  {
+			 // clean up, free memory
+			  free(delimiters[i]);
+			  delimiters[i] = NULL;
+			  }
+			  
+			  free(delimiters);
+			  
+			  exit(0);
+    }
+    else {
+      
+      // this is a child process. we will call bruteforce here
+      
+      printf("i am process %d and i will go from %s to %s\n", i, delimiters[i], delimiters[i+1]);
+      char* result = brute(argv[1], delimiters[i], delimiters[i+1]);
+      if(result != NULL) { 
+	// child process found result. print password and return exit code 0 (=success)
+	printf("Das Passwort wurde gefunden: %s\n", result);
+	time_t end = time(0);
+	int elapsed = end - start;
+	printf("Es hat %d Sekunden gedauert.\n", elapsed);
+	exit(0);
+      }
+      else
+      {
+	// child process done bruteforcing but found nothing: exit with error code 1
+	// this case rarely occurs unless the password is near the end of the block
+	exit(1);
+      }
+    }
 }
