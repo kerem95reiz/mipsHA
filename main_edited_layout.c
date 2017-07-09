@@ -142,6 +142,7 @@ void readTheTasks(FILE* input,FILE* addRestMat , int** restReq, int** usageOfThe
 
         // When we want to allocate some places in out memory, then go into the first section, to release something into the else section
         if (readCharacter == 65){
+            printf("\n::::::::: HERE1 ::::::::\n");
 
             whichProc = cleanIrrelChars(input) - 48;
             whichRes = cleanIrrelChars(input) - 48;
@@ -159,8 +160,14 @@ void readTheTasks(FILE* input,FILE* addRestMat , int** restReq, int** usageOfThe
 
 
             int isSafe = safeOrUnsafe(addRestMat, tempRestReq, tempusageOfTheRes, tempCapOfRes, numSimRes, numSimPro, plusHighestRes, FROMREADTASK);
+            printf("\n::::::::: HERE2 ::::::::\n");
 
-            if (isSafe == 0) continue;
+            if (isSafe == 0){
+                continue;
+            } else {
+                break;
+            }
+            printf("\n::::::::: HERE3 ::::::::\n");
 
             // Because we allocate in each loop, we should throw at each time another requiremt, since it's not a requirement anymore :)
             for (int i = 0; i < howManyRes; ++i) {
@@ -187,8 +194,12 @@ void readTheTasks(FILE* input,FILE* addRestMat , int** restReq, int** usageOfThe
             }
 
             int isSafe = safeOrUnsafe(addRestMat, tempRestReq, tempusageOfTheRes, tempCapOfRes, numSimRes, numSimPro, plusHighestRes, FROMREADTASK);
-
-            if (isSafe == 0) continue;
+            printf("\n::::::::: HERE ::::::::\n");
+            if (isSafe == 0){
+                continue;
+            } else {
+                break;
+            }
 
             for (int i = 0; i < howManyRes; ++i) {
                 usageOfTheRes[whichProc][whichRes] -= 1;
@@ -337,24 +348,6 @@ int safeOrUnsafe(FILE *addRestMat, int** restReq, int** usageOfTheRes, int* capO
 
     while (currsit == -1){
         existProcess = true;
-//
-//        // Just to debug, we will print out the restReq
-//        printf("RestReq:\n");
-//        for (int j = 0; j < numSimPro; ++j) {
-//            for (int i = 0; i < numSimRes; ++i) {
-//                printf("%d ", restReq[j][i]);
-//            }printf("\n");
-//        }printf("\n");
-//
-//        printf("capOfRes: %d %d %d\n", capOfRes[0], capOfRes[1], capOfRes[2]);
-//
-//        printf("UsageOfTheRes:\n");
-//        for (int j = 0; j < numSimPro; ++j) {
-//            for (int i = 0; i < numSimRes; ++i) {
-//                printf("%d ", usageOfTheRes[j][i]);
-//            }printf("\n");
-//        }printf("\n");
-//
         for (int i = 0; i < numSimRes; ++i) {
             if (restReq[counter][i] <= capOfRes[i]){
                 existProcess = existProcess && true;
@@ -387,7 +380,6 @@ int safeOrUnsafe(FILE *addRestMat, int** restReq, int** usageOfTheRes, int* capO
         }
         counter = (counter+1) % numSimPro;
     }
-
     if (currsit == 1){
         if (fromWhere == FROMMAIN) fprintf(addRestMat, "\nSICHER\n");
         return safe;
@@ -395,7 +387,6 @@ int safeOrUnsafe(FILE *addRestMat, int** restReq, int** usageOfTheRes, int* capO
         if (fromWhere == FROMMAIN) fprintf(addRestMat, "\nUNSICHER\n");
         return unsafe;
     }
-
     return -1;
 }
 /////////////////////////////
@@ -427,3 +418,31 @@ int** createCopyMatrix(int** restReq, int numSimPro, int numSimRes){
 
     return restReqOrg;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
