@@ -201,27 +201,25 @@ void readTheTasks(FILE* input,FILE* addRestMat , int** restReq, int** usageOfThe
 
 
 void printTheOperation(FILE* addRestMat, int** restReq, int* capOfRes,int numSimPro, int numSimRes, int readCharacter, int whichProc, int whichRes, int howManyRes){
-
     fprintf(addRestMat, "Operation: %c %d %d %d\n\nRestanforderungen:\n", readCharacter, whichProc, whichRes, howManyRes);
-
     for (int j = 0; j < numSimPro; ++j) {
         for (int i = 0; i < numSimRes; ++i) {
-
             if (i == 0){
                 fprintf(addRestMat, " ");
             } else{
                 fprintf(addRestMat, "  ");
             }
-
-            putc(restReq[j][i]+48, addRestMat);
-
-        }fprintf(addRestMat, "\n");
-    }fprintf(addRestMat, "\n");
+           putc(restReq[j][i]+48, addRestMat);
+        }
+        fprintf(addRestMat, "\n");
+    }
+    fprintf(addRestMat, "\n");
 
     fprintf(addRestMat, "f:");
     for (int k = 0; k < numSimRes; ++k) {
         fprintf(addRestMat, "  %d", capOfRes[k]);
-    }fprintf(addRestMat, "\n\n");
+    }
+    fprintf(addRestMat, "\n\n");
 
 }
 ////////////////////////////////////
@@ -429,6 +427,3 @@ int** createCopyMatrix(int** restReq, int numSimPro, int numSimRes){
 
     return restReqOrg;
 }
-
-
-
