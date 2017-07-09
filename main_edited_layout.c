@@ -229,23 +229,15 @@ void printTheOperation(FILE* addRestMat, int** restReq, int* capOfRes,int numSim
 ////////////////////////////////////
 
 
-
-
 int cleanIrrelChars(FILE *x){
-
     int readChar;
-
     while (1){
         readChar = fgetc(x);
-
         if (readChar >= 48 && readChar <= 57){
             return readChar;
         }
     }
-
 }
-
-
 
 void writeToTheFile(FILE *output, int** totReq, int** usageOfTheRes, int* capOfRes, int numSimPro, int numSimRes){
 
@@ -255,37 +247,37 @@ void writeToTheFile(FILE *output, int** totReq, int** usageOfTheRes, int* capOfR
     fprintf(output, "Gesamtanforderungen:\n");
     for (int i1 = 0; i1 < numSimPro; ++i1) {
         for (int i = 0; i < numSimRes; ++i) {
-
             if (i == 0){
                 fprintf(output, " ");
             } else{
                 fprintf(output, "  ");
             }
-
             putc(totReq[i1][i]+48, output);
-
-        }fprintf(output, "\n");
-    }fprintf(output, "\n");
+        }
+        fprintf(output, "\n");
+    }
+    fprintf(output, "\n");
 
     fprintf(output, "Belegungen:\n");
     for (int i1 = 0; i1 < numSimPro; ++i1) {
         for (int i = 0; i < numSimRes; ++i) {
-
             if (i == 0){
                 fprintf(output, " ");
             } else{
                 fprintf(output, "  ");
             }
             putc(usageOfTheRes[i1][i]+48, output);
-        }fprintf(output, "\n");
-    }fprintf(output, "\n");
-
+        }
+        fprintf(output, "\n");
+    }
+    fprintf(output, "\n");
 
     fprintf(output, "verfügbar:");
     for (int j1 = 0; j1 < numSimRes; ++j1) {
         fprintf(output ,"  ");
         putc(capOfRes[j1]+48, output);
-    }fprintf(output, "\n");
+    }
+    fprintf(output, "\n");
 
 }
 
@@ -437,5 +429,6 @@ int** createCopyMatrix(int** restReq, int numSimPro, int numSimRes){
 
     return restReqOrg;
 }
+
 
 
