@@ -142,8 +142,6 @@ void readTheTasks(FILE* input,FILE* addRestMat , int** restReq, int** usageOfThe
 
         // When we want to allocate some places in out memory, then go into the first section, to release something into the else section
         if (readCharacter == 65){
-            printf("\n::::::::: HERE1 ::::::::\n");
-
             whichProc = cleanIrrelChars(input) - 48;
             whichRes = cleanIrrelChars(input) - 48;
             howManyRes = cleanIrrelChars(input) - 48;
@@ -160,45 +158,30 @@ void readTheTasks(FILE* input,FILE* addRestMat , int** restReq, int** usageOfThe
 
 
             int isSafe = safeOrUnsafe(addRestMat, tempRestReq, tempusageOfTheRes, tempCapOfRes, numSimRes, numSimPro, plusHighestRes, FROMREADTASK);
-            printf("\n::::::::: HERE2 ::::::::\n");
-
-            if (isSafe == 0){
-                continue;
-            } else {
-                break;
+            
+            //printf("isSafe 65 = %d\n", isSafe);
+            if (isSafe == 1){
+                // Because we allocate in each loop, we should throw at each time another requiremt, since it's not a requirement anymore :)
+                for (int i = 0; i < howManyRes; ++i) {
+                    restReq[whichProc][whichRes] -= 1;
+                    usageOfTheRes[whichProc][whichRes] += 1;
+                    capOfRes[whichRes] -= 1;
+                }
+                printTheOperation(addRestMat, restReq, capOfRes, numSimPro, numSimRes, readCharacter, whichProc, whichRes, howManyRes);
             }
-            printf("\n::::::::: HERE3 ::::::::\n");
-
-            // Because we allocate in each loop, we should throw at each time another requiremt, since it's not a requirement anymore :)
-            for (int i = 0; i < howManyRes; ++i) {
-                restReq[whichProc][whichRes] -= 1;
-                usageOfTheRes[whichProc][whichRes] += 1;
-                capOfRes[whichRes] -= 1;
-            }
-
-            printTheOperation(addRestMat, restReq, capOfRes, numSimPro, numSimRes, readCharacter, whichProc, whichRes, howManyRes);
-
+            
         } else if (readCharacter == 82){
-
+            printf("\n##### Here R #####\n");
             whichProc = cleanIrrelChars(input) - 48;
             whichRes = cleanIrrelChars(input) - 48;
             howManyRes = cleanIrrelChars(input) - 48;
 
-            int** tempRestReq = createCopyMatrix(restReq, numSimPro, numSimRes);
             int* tempCapOfRes = createCopyArray(capOfRes, numSimRes);
             int** tempusageOfTheRes = createCopyMatrix(usageOfTheRes, numSimPro, numSimRes);
 
             for (int i = 0; i < howManyRes; ++i) {
                 tempusageOfTheRes[whichProc][whichRes] -= 1;
                 tempCapOfRes[whichRes] += 1;
-            }
-
-            int isSafe = safeOrUnsafe(addRestMat, tempRestReq, tempusageOfTheRes, tempCapOfRes, numSimRes, numSimPro, plusHighestRes, FROMREADTASK);
-            printf("\n::::::::: HERE ::::::::\n");
-            if (isSafe == 0){
-                continue;
-            } else {
-                break;
             }
 
             for (int i = 0; i < howManyRes; ++i) {
